@@ -1,0 +1,6 @@
+{
+  "name": "زايد للمونتاج التلقائي بالذكاء الاصطناعي",
+  "description": "منظومة زايد للمونتاج التلقائي بالذكاء الاصطناعي: تحليل المشاهد الذكي بـ Gemini Vision، تنقية وعزل الصوت بـ DeepFilterNet، التفريغ بـ Faster-Whisper، وخفض الصوت التلقائي ورندرة NVENC",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

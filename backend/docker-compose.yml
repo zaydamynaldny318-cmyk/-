@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: zaid_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  backend-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zaid_backend_api
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=zaid-ai-super-secret-production-key-2026-v1
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - FREESOUND_API_KEY=${FREESOUND_API_KEY:-}
+      - JAMENDO_CLIENT_ID=${JAMENDO_CLIENT_ID:-}
+      - UPLOAD_DIR=/tmp/zaid_editor/uploads
+      - OUTPUT_DIR=/tmp/zaid_editor/outputs
+    depends_on:
+      - redis
+    volumes:
+      - shared_media:/tmp/zaid_editor
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zaid_celery_worker
+    command: celery -A celery_worker.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - FREESOUND_API_KEY=${FREESOUND_API_KEY:-}
+      - JAMENDO_CLIENT_ID=${JAMENDO_CLIENT_ID:-}
+      - UPLOAD_DIR=/tmp/zaid_editor/uploads
+      - OUTPUT_DIR=/tmp/zaid_editor/outputs
+    depends_on:
+      - redis
+      - backend-api
+    volumes:
+      - shared_media:/tmp/zaid_editor
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  shared_media:
